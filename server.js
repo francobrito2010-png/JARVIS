@@ -130,8 +130,10 @@ app.get("/voz", async (req, res) => {
   }
 });
 
-// --- Herramientas (Paso 4): Claude elige cual usar segun lo que diga Franco ---
+// --- Herramientas: Claude elige cual usar segun lo que diga Franco ---
 const TOOLS = [
+  // Busqueda web (servidor de Anthropic): datos actuales, noticias, precios...
+  { type: "web_search_20260209", name: "web_search", max_uses: 3 },
   {
     name: "crear_nota",
     description:
@@ -219,9 +221,14 @@ app.post("/chat", async (req, res) => {
         messages,
       });
 
+      // Herramienta de servidor (p.ej. busqueda web) que sigue trabajando: continuar.
+      if (respuestaApi.stop_reason === "pause_turn") {
+        messages.push({ role: "assistant", content: respuestaApi.content });
+        continue;
+      }
       if (respuestaApi.stop_reason !== "tool_use") break;
 
-      // Claude pidio una o varias herramientas: ejecutarlas y devolver resultados.
+      // Claude pidio una o varias herramientas nuestras: ejecutarlas y devolver resultados.
       messages.push({ role: "assistant", content: respuestaApi.content });
       const resultados = [];
       for (const bloque of respuestaApi.content) {
