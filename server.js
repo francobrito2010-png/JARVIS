@@ -32,7 +32,7 @@ if (!process.env.ANTHROPIC_API_KEY) {
 
 const anthropic = new Anthropic(); // lee ANTHROPIC_API_KEY del entorno (.env)
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "8mb" })); // 8mb: las fotos del movil pesan
 
 // CORS: permite que la pagina de voz hable con el backend aunque esten en
 // origenes distintos (p.ej. la pagina en GitHub Pages y el backend en Railway).
@@ -292,6 +292,54 @@ app.post("/chat", async (req, res) => {
     }
     console.error("[JARVIS] Error inesperado:", error);
     res.status(500).json({ error: "Error interno del servidor." });
+  }
+});
+
+// --- Vision: analizar una foto de la camara del movil ---
+app.post("/ver", async (req, res) => {
+  const { imagen, mensaje } = req.body || {};
+  const m = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(String(imagen || ""));
+  if (!m) return res.status(400).json({ error: "Falta la imagen." });
+  const media_type = m[1];
+  const data = m[2];
+  const pregunta =
+    typeof mensaje === "string" && mensaje.trim()
+      ? mensaje.trim()
+      : "Que ves en esta imagen? Identificalo y dime lo relevante para el senor Franco, breve.";
+
+  const previos = memoria.ultimosTurnos();
+  const perfilTexto = memoria.renderPerfil();
+  const systemTexto = perfilTexto
+    ? `${SYSTEM_PROMPT}\n\n# Lo que se del senor Franco (perfil)\n${perfilTexto}`
+    : SYSTEM_PROMPT;
+
+  try {
+    const inicio = Date.now();
+    const r = await anthropic.messages.create({
+      model: MODELO,
+      max_tokens: 1024,
+      system: [{ type: "text", text: systemTexto, cache_control: { type: "ephemeral" } }],
+      thinking: { type: "disabled" },
+      output_config: { effort: "low" },
+      messages: [
+        ...previos,
+        {
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type, data } },
+            { type: "text", text: pregunta },
+          ],
+        },
+      ],
+    });
+    const ms = Date.now() - inicio;
+    const respuesta = r.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
+    memoria.guardarTurno("user", "[le mostre una imagen] " + pregunta);
+    memoria.guardarTurno("assistant", respuesta);
+    res.json({ respuesta, _meta: { ms } });
+  } catch (e) {
+    console.error("[JARVIS] Error de vision:", e.message);
+    res.status(502).json({ error: "No pude analizar la imagen." });
   }
 });
 
