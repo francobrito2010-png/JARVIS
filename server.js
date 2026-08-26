@@ -161,6 +161,23 @@ const TOOLS = [
       required: ["consulta"],
     },
   },
+  {
+    name: "traducir",
+    description:
+      "Traduce algo a otro idioma y lo dice con voz NATIVA de ese idioma. Usala SIEMPRE que el " +
+      "senor Franco pida traducir, decir algo en otro idioma, o preguntar que significa o que dice " +
+      "algo (p.ej. 'traduceme...', 'como se dice... en ingles', 'que dice esto', 'ponlo en portugues'). " +
+      "TU haces la traduccion: pon el texto YA TRADUCIDO en 'texto'. Detecta el idioma destino segun " +
+      "lo que pida (si quiere ENTENDER algo dicho en otro idioma, traduce al espanol).",
+    input_schema: {
+      type: "object",
+      properties: {
+        texto: { type: "string", description: "El texto YA TRADUCIDO al idioma destino." },
+        idioma: { type: "string", description: "Nombre del idioma destino: espanol, ingles, portugues, frances, italiano, aleman, arabe, chino, ruso..." },
+      },
+      required: ["texto", "idioma"],
+    },
+  },
 ];
 
 function ejecutarHerramienta(nombre, input) {
@@ -209,6 +226,7 @@ app.post("/chat", async (req, res) => {
     // vueltas es una red de seguridad para que nunca se quede en bucle.
     let respuestaApi;
     const herramientasUsadas = [];
+    let vozRespuesta = null; // si traduce, la voz nativa del idioma destino
     for (let vuelta = 0; vuelta < 6; vuelta++) {
       respuestaApi = await anthropic.messages.create({
         model: MODELO,
@@ -234,7 +252,13 @@ app.post("/chat", async (req, res) => {
       for (const bloque of respuestaApi.content) {
         if (bloque.type === "tool_use") {
           herramientasUsadas.push(bloque.name);
-          const salida = ejecutarHerramienta(bloque.name, bloque.input);
+          let salida;
+          if (bloque.name === "traducir") {
+            vozRespuesta = vozDeIdioma(bloque.input && bloque.input.idioma);
+            salida = "Traduccion registrada. Responde UNICAMENTE con la traduccion, sin comillas ni anadidos.";
+          } else {
+            salida = ejecutarHerramienta(bloque.name, bloque.input);
+          }
           resultados.push({ type: "tool_result", tool_use_id: bloque.id, content: salida });
         }
       }
@@ -269,6 +293,7 @@ app.post("/chat", async (req, res) => {
         modelo: MODELO,
         turnos_inyectados: previos.length,
         herramientas: herramientasUsadas,
+        voz: vozRespuesta,
         tokens: {
           entrada: respuestaApi.usage.input_tokens,
           salida: respuestaApi.usage.output_tokens,
@@ -295,32 +320,19 @@ app.post("/chat", async (req, res) => {
   }
 });
 
-// --- Traductor: traduce un texto al idioma pedido ---
-app.post("/traducir", async (req, res) => {
-  const texto = String(req.body?.texto || "").slice(0, 2000).trim();
-  const idioma = String(req.body?.idioma || "ingles").slice(0, 40);
-  if (!texto) return res.status(400).json({ error: "Falta el texto." });
-  try {
-    const r = await anthropic.messages.create({
-      model: MODELO,
-      max_tokens: 600,
-      system: [{
-        type: "text",
-        text: `Eres un traductor profesional. Traduce el texto del usuario al ${idioma}. ` +
-          `Devuelve UNICAMENTE la traduccion, sin comillas, sin explicaciones ni notas.`,
-        cache_control: { type: "ephemeral" },
-      }],
-      thinking: { type: "disabled" },
-      output_config: { effort: "low" },
-      messages: [{ role: "user", content: texto }],
-    });
-    const traduccion = r.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
-    res.json({ traduccion });
-  } catch (e) {
-    console.error("[JARVIS] Error de traduccion:", e.message);
-    res.status(502).json({ error: "No pude traducir." });
-  }
-});
+// Mapa idioma -> voz nativa (para que la traduccion se oiga en ese idioma).
+function vozDeIdioma(idioma) {
+  const i = String(idioma || "").toLowerCase();
+  if (/ingl|english/.test(i)) return "en-US-GuyNeural";
+  if (/portug|portugu/.test(i)) return "pt-PT-DuarteNeural";
+  if (/franc|french/.test(i)) return "fr-FR-HenriNeural";
+  if (/italia/.test(i)) return "it-IT-DiegoNeural";
+  if (/alem|german|deutsch/.test(i)) return "de-DE-ConradNeural";
+  if (/arab/.test(i)) return "ar-EG-ShakirNeural";
+  if (/chin|mandar/.test(i)) return "zh-CN-YunxiNeural";
+  if (/rus/.test(i)) return "ru-RU-DmitryNeural";
+  return VOZ; // espanol u otros: la voz por defecto (Andres)
+}
 
 // --- Vision: analizar una foto de la camara del movil ---
 app.post("/ver", async (req, res) => {

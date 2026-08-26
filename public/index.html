@@ -72,11 +72,6 @@
     border-radius:9px;padding:9px 10px;font-family:var(--mono);font-size:12px;outline:none}
   #probarVoz{border:1px solid var(--ambar);background:transparent;color:var(--ambar);border-radius:9px;
     padding:9px 12px;cursor:pointer;font-family:var(--mono);font-size:12px;white-space:nowrap}
-  #idiomaSel{flex:1;background:var(--panel);border:1px solid var(--linea);color:var(--hueso);
-    border-radius:9px;padding:9px 10px;font-family:var(--mono);font-size:12px;outline:none}
-  #tradBtn{border:1px solid var(--linea);background:transparent;color:var(--humo);border-radius:9px;
-    padding:9px 12px;cursor:pointer;font-family:var(--mono);font-size:12px;white-space:nowrap}
-  #tradBtn.activo{border-color:var(--ambar);background:var(--ambar);color:#07090B;font-weight:600}
   #hablar{
     flex-shrink:0;border:1px solid var(--ambar);background:transparent;color:var(--ambar);
     font-family:var(--mono);font-size:13px;letter-spacing:.06em;border-radius:10px;padding:12px 16px;cursor:pointer;transition:.18s;
@@ -142,10 +137,6 @@
     <span id="vozLbl">Voz</span>
     <select id="vozSel"></select>
     <button id="probarVoz">Probar ▶</button>
-  </div>
-  <div class="crow">
-    <button id="tradBtn">🌍 Traductor</button>
-    <select id="idiomaSel"></select>
   </div>
 </div>
 
@@ -579,55 +570,16 @@ async function enviar(mensaje){
       $('dJarvis').textContent = data.respuesta;
       pintarAgenda(); // por si creó una nota
       setModo('habla');
-      hablar(data.respuesta, terminarTurno);
+      // Si tradujo, _meta.voz trae la voz nativa del idioma destino.
+      hablar(data.respuesta, terminarTurno, data._meta && data._meta.voz);
     }
   }catch(e){ $('dJarvis').textContent = '⚠️ Sin conexión con el servidor.'; terminarTurno(); }
   finally{ ocupado=false; }
 }
 function terminarTurno(){ if(modoConversacion) escuchar(); else setModo('reposo'); }
 
-$('enviar').addEventListener('click', ()=>{ const m=$('texto').value; $('texto').value=''; procesarEntrada(m); });
-$('texto').addEventListener('keydown', e=>{ if(e.key==='Enter'){ const m=$('texto').value; $('texto').value=''; procesarEntrada(m); } });
-
-/* --- Traductor en vivo --- */
-const IDIOMAS = [
-  ['inglés','en-US-GuyNeural'],
-  ['portugués','pt-PT-DuarteNeural'],
-  ['francés','fr-FR-HenriNeural'],
-  ['italiano','it-IT-DiegoNeural'],
-  ['alemán','de-DE-ConradNeural'],
-  ['árabe','ar-EG-ShakirNeural'],
-  ['chino','zh-CN-YunxiNeural'],
-  ['ruso','ru-RU-DmitryNeural'],
-];
-const $idiomaSel = document.getElementById('idiomaSel');
-IDIOMAS.forEach(([nombre,voz])=>{ const o=document.createElement('option'); o.value=voz; o.textContent=nombre; o.dataset.nombre=nombre; $idiomaSel.appendChild(o); });
-let modoTraductor = false;
-const $tradBtn = document.getElementById('tradBtn');
-$tradBtn.addEventListener('click', ()=>{
-  modoTraductor = !modoTraductor;
-  $tradBtn.classList.toggle('activo', modoTraductor);
-  $tradBtn.textContent = modoTraductor ? '🌍 Traduciendo' : '🌍 Traductor';
-});
-function idiomaNombre(){ const o=$idiomaSel.selectedOptions[0]; return o ? o.dataset.nombre : 'inglés'; }
-function vozIdioma(){ return $idiomaSel.value || 'en-US-GuyNeural'; }
-
-// Reparte la entrada: en modo traductor traduce; si no, conversa normal.
-function procesarEntrada(texto){ if(modoTraductor) traducir(texto); else enviar(texto); }
-
-async function traducir(texto){
-  texto = (texto||'').trim(); if(!texto || ocupado) return; ocupado = true;
-  $('dTu').textContent = '🌍 ' + texto;
-  $('dJarvis').textContent = '';
-  setModo('piensa','Traduciendo…');
-  try{
-    const r = await fetch(BACKEND + '/traducir', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ texto, idioma: idiomaNombre() }) });
-    const data = await r.json();
-    if(!r.ok){ $('dJarvis').textContent = '⚠️ ' + (data.error||'Error'); terminarTurno(); }
-    else{ $('dJarvis').textContent = data.traduccion; setModo('habla'); hablar(data.traduccion, terminarTurno, vozIdioma()); }
-  }catch(e){ $('dJarvis').textContent = '⚠️ Sin conexión.'; terminarTurno(); }
-  finally{ ocupado = false; }
-}
+$('enviar').addEventListener('click', ()=>{ const m=$('texto').value; $('texto').value=''; enviar(m); });
+$('texto').addEventListener('keydown', e=>{ if(e.key==='Enter'){ const m=$('texto').value; $('texto').value=''; enviar(m); } });
 
 /* --- Cámara y visión --- */
 $('camBtn').addEventListener('click', ()=> $('camInput').click());
@@ -687,7 +639,7 @@ if(!Reconocedor){
     setModo('escucha', (finalTexto||interim) ? (finalTexto||interim) : 'Escuchando'); };
   rec.onerror = (ev)=>{ if(ev.error==='no-speech') return; };
   rec.onend = ()=>{ escuchandoAhora=false; const dicho=finalTexto.trim();
-    if(dicho){ if(FRASES_PARAR.test(dicho)){ pararConversacion(); return; } procesarEntrada(dicho); }
+    if(dicho){ if(FRASES_PARAR.test(dicho)){ pararConversacion(); return; } enviar(dicho); }
     else if(modoConversacion){ setModo('escucha','Le escucho'); setTimeout(()=>{ if(modoConversacion&&!ocupado) escuchar(); }, 300); }
     else setModo('reposo'); };
 }
