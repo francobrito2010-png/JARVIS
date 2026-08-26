@@ -85,6 +85,32 @@ app.post("/hecho", (req, res) => {
 
 app.get("/notas", (_req, res) => res.json({ notas: memoria.listNotas() }));
 
+// --- Voz: genera el audio en el servidor (voz Andres de Guatemala) ---
+// Asi suena igual en TODOS los dispositivos, movil incluido: los navegadores
+// moviles bloquean la voz del navegador, pero un audio normal si se reproduce.
+// Usa el servicio gratuito de Edge (Microsoft), sin llave.
+let _ttsMod = null;
+async function cargarTTS() { if (!_ttsMod) _ttsMod = await import("msedge-tts"); return _ttsMod; }
+const VOZ = process.env.JARVIS_VOZ || "es-GT-AndresNeural";
+
+app.get("/voz", async (req, res) => {
+  const texto = String(req.query.t || "").slice(0, 1200).trim();
+  if (!texto) return res.status(400).end();
+  try {
+    const { MsEdgeTTS, OUTPUT_FORMAT } = await cargarTTS();
+    const tts = new MsEdgeTTS();
+    await tts.setMetadata(VOZ, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+    const { audioStream } = tts.toStream(texto);
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Cache-Control", "no-store");
+    audioStream.pipe(res);
+    audioStream.on("error", () => { try { res.end(); } catch (e) {} });
+  } catch (e) {
+    console.error("[JARVIS] Error de voz:", e.message);
+    res.status(502).end();
+  }
+});
+
 // --- Herramientas (Paso 4): Claude elige cual usar segun lo que diga Franco ---
 const TOOLS = [
   {
