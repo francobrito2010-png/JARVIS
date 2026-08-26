@@ -295,6 +295,33 @@ app.post("/chat", async (req, res) => {
   }
 });
 
+// --- Traductor: traduce un texto al idioma pedido ---
+app.post("/traducir", async (req, res) => {
+  const texto = String(req.body?.texto || "").slice(0, 2000).trim();
+  const idioma = String(req.body?.idioma || "ingles").slice(0, 40);
+  if (!texto) return res.status(400).json({ error: "Falta el texto." });
+  try {
+    const r = await anthropic.messages.create({
+      model: MODELO,
+      max_tokens: 600,
+      system: [{
+        type: "text",
+        text: `Eres un traductor profesional. Traduce el texto del usuario al ${idioma}. ` +
+          `Devuelve UNICAMENTE la traduccion, sin comillas, sin explicaciones ni notas.`,
+        cache_control: { type: "ephemeral" },
+      }],
+      thinking: { type: "disabled" },
+      output_config: { effort: "low" },
+      messages: [{ role: "user", content: texto }],
+    });
+    const traduccion = r.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
+    res.json({ traduccion });
+  } catch (e) {
+    console.error("[JARVIS] Error de traduccion:", e.message);
+    res.status(502).json({ error: "No pude traducir." });
+  }
+});
+
 // --- Vision: analizar una foto de la camara del movil ---
 app.post("/ver", async (req, res) => {
   const { imagen, mensaje } = req.body || {};
