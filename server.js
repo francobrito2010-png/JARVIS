@@ -93,21 +93,40 @@ let _ttsMod = null;
 async function cargarTTS() { if (!_ttsMod) _ttsMod = await import("msedge-tts"); return _ttsMod; }
 const VOZ = process.env.JARVIS_VOZ || "es-GT-AndresNeural";
 
+// Reutilizamos la conexion por voz: evita el saludo (handshake) en cada turno,
+// que era lo que anadia latencia. Si la conexion murio, se recrea al vuelo.
+const _ttsCache = new Map();
+async function obtenerTTS(voz) {
+  const { MsEdgeTTS, OUTPUT_FORMAT } = await cargarTTS();
+  if (!_ttsCache.has(voz)) {
+    const tts = new MsEdgeTTS();
+    await tts.setMetadata(voz, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+    _ttsCache.set(voz, tts);
+  }
+  return _ttsCache.get(voz);
+}
+
 app.get("/voz", async (req, res) => {
   const texto = String(req.query.t || "").slice(0, 1200).trim();
   if (!texto) return res.status(400).end();
+  // Voz elegida por el cliente (?v=), validada; si no encaja, la de por defecto.
+  let voz = String(req.query.v || "").trim();
+  if (!/^es-[A-Z]{2}-[A-Za-z]+Neural$/.test(voz)) voz = VOZ;
+  res.setHeader("Content-Type", "audio/mpeg");
+  res.setHeader("Cache-Control", "no-store");
   try {
-    const { MsEdgeTTS, OUTPUT_FORMAT } = await cargarTTS();
-    const tts = new MsEdgeTTS();
-    await tts.setMetadata(VOZ, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
-    const { audioStream } = tts.toStream(texto);
-    res.setHeader("Content-Type", "audio/mpeg");
-    res.setHeader("Cache-Control", "no-store");
+    let audioStream;
+    try {
+      audioStream = (await obtenerTTS(voz)).toStream(texto).audioStream;
+    } catch (e1) {
+      _ttsCache.delete(voz); // conexion muerta: recrear una vez
+      audioStream = (await obtenerTTS(voz)).toStream(texto).audioStream;
+    }
     audioStream.pipe(res);
     audioStream.on("error", () => { try { res.end(); } catch (e) {} });
   } catch (e) {
     console.error("[JARVIS] Error de voz:", e.message);
-    res.status(502).end();
+    if (!res.headersSent) res.status(502).end(); else res.end();
   }
 });
 
