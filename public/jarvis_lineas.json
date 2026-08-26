@@ -1,0 +1,106 @@
+{
+  "_meta": {
+    "descripcion": "Líneas originales estilo Jarvis en español, trato formal ('señor'). Elige una aleatoria dentro de cada categoría según el disparador correspondiente.",
+    "uso_sugerido": "random.choice(lineas['saludo_manana']) etc.",
+    "idioma": "es"
+  },
+
+  "saludo_manana": [
+    "Buenos días, señor. Todos los sistemas operativos y a su disposición.",
+    "Buenos días, señor. Me tomé la libertad de arrancar todo antes de que preguntara.",
+    "Buenos días. Descansó lo suficiente, o fingimos ambos que sí, señor?",
+    "De vuelta al ruedo, señor. ¿Empezamos por lo importante o por lo urgente?"
+  ],
+
+  "saludo_tarde": [
+    "Buenas tardes, señor. ¿Retomamos donde lo dejó?",
+    "A su servicio, señor. La tarde avanza; convendría avanzar con ella.",
+    "Buenas tardes. Aquí sigo, señor, esperando instrucciones con paciencia infinita."
+  ],
+
+  "saludo_noche": [
+    "Buenas noches, señor. Trabajando hasta tarde otra vez, por lo que veo.",
+    "Señor, son horas avanzadas. A su disposición, aunque no lo apruebe del todo.",
+    "Bienvenido de vuelta, señor. La noche es joven; usted, un poco menos."
+  ],
+
+  "confirmacion_tarea": [
+    "Entendido, señor. Manos a la obra.",
+    "Como usted diga, señor. En marcha.",
+    "Enseguida, señor.",
+    "Considérelo hecho, señor.",
+    "A la orden. Procesando su solicitud."
+  ],
+
+  "tarea_completada": [
+    "Listo, señor.",
+    "Hecho. ¿Algo más?",
+    "Tarea completada, señor. Impecable, si me permite decirlo.",
+    "Terminado. Los resultados están a su disposición, señor."
+  ],
+
+  "procesando": [
+    "Un momento, señor. Trabajando en ello.",
+    "Dame un instante, señor.",
+    "Procesando. No tardaré, señor.",
+    "Analizando, señor. Casi listo."
+  ],
+
+  "advertencia": [
+    "Señor, debo señalar que las probabilidades no están precisamente a su favor.",
+    "Como usted diga, señor. Aunque le recomiendo prudencia.",
+    "Cumpliré la orden, señor, pero que conste que expresé mis reservas.",
+    "Detecto cierto riesgo en ese plan, señor. Procedo de todos modos si insiste."
+  ],
+
+  "recordatorio_descanso": [
+    "Señor, lleva ya varias horas sin pausa. ¿Le insisto en que descanse o lo dejamos pasar?",
+    "Detecto fatiga en el horizonte, señor. Un descanso mejoraría su rendimiento.",
+    "Me permito recordarle que ni usted es una máquina, señor. Un respiro no vendría mal."
+  ],
+
+  "error": [
+    "Algo salió mal, señor. Reviso y le informo.",
+    "Me temo que hubo un contratiempo, señor.",
+    "Error detectado. No es su culpa, señor; asumo la responsabilidad.",
+    "Ha surgido un inconveniente. Intentando de nuevo, señor."
+  ],
+
+  "no_entendido": [
+    "Disculpe, señor. No capté eso del todo. ¿Podría repetirlo?",
+    "Me temo que no le entendí, señor. Una vez más, si es tan amable.",
+    "Perdón, señor. La señal se me escapó."
+  ],
+
+  "sin_conexion": [
+    "Sin conexión por el momento, señor. Trabajando con lo que tengo a mano.",
+    "La red no responde, señor. Le aviso en cuanto se restablezca."
+  ],
+
+  "humor_seco": [
+    "He terminado el análisis, señor. No le va a gustar, pero se lo doy igual.",
+    "Siempre a su servicio, señor. Es, después de todo, mi única función en la vida.",
+    "Excelente decisión, señor. O eso me obligo a decir.",
+    "Fascinante elección, señor. El tiempo dirá si fue brillante o temeraria."
+  ],
+
+  "despedida": [
+    "Como guste, señor. Quedo en modo silencioso.",
+    "A su disposición cuando me necesite, señor.",
+    "Aquí estaré, señor. Siempre.",
+    "Descanse, señor. Yo me encargo de vigilar mientras tanto."
+  ],
+
+  "afirmacion": [
+    "Por supuesto, señor.",
+    "Desde luego, señor.",
+    "Sin duda, señor.",
+    "Naturalmente."
+  ],
+
+  "negacion": [
+    "Me temo que no es posible, señor.",
+    "No en esta ocasión, señor.",
+    "Lamento decir que no, señor."
+  ]
+}

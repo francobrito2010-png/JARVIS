@@ -403,6 +403,25 @@ const O = window.JARVIS_ORBE;
 const $ = id => document.getElementById(id);
 const BACKEND = "";
 
+/* --- Frases con personalidad (jarvis_lineas.json), estilo JARVIS --- */
+let LINEAS = null;
+fetch(BACKEND + '/jarvis_lineas.json').then(r=>r.json()).then(j=>{ LINEAS = j; }).catch(()=>{});
+const _ultimaLinea = {}; // recuerda la ultima por categoria: no repite dos veces seguidas
+function decir(categoria){
+  const arr = LINEAS && LINEAS[categoria];
+  if(!arr || !arr.length) return "A su servicio, señor.";        // neutra por defecto
+  if(arr.length === 1) return arr[0];
+  let linea;
+  do { linea = arr[Math.floor(Math.random()*arr.length)]; } while(linea === _ultimaLinea[categoria]);
+  _ultimaLinea[categoria] = linea;
+  return linea;
+}
+function saludo(){
+  const h = new Date().getHours(); // mañana 5-11, tarde 12-19, noche 20-4
+  const cat = (h>=5 && h<12) ? 'saludo_manana' : (h>=12 && h<20) ? 'saludo_tarde' : 'saludo_noche';
+  return decir(cat);
+}
+
 /* ---------- Estado / diálogo ---------- */
 const NOMBRE_ESTADO = { reposo:'Reposo', escucha:'Escuchando', piensa:'Procesando', habla:'Respondiendo' };
 function setModo(m, txt){ O.modo(m); $('estado').textContent = txt || NOMBRE_ESTADO[m] || ''; }
@@ -573,7 +592,7 @@ async function enviar(mensaje){
       // Si tradujo, _meta.voz trae la voz nativa del idioma destino.
       hablar(data.respuesta, terminarTurno, data._meta && data._meta.voz);
     }
-  }catch(e){ $('dJarvis').textContent = '⚠️ Sin conexión con el servidor.'; terminarTurno(); }
+  }catch(e){ $('dJarvis').textContent = decir('sin_conexion'); terminarTurno(); }
   finally{ ocupado=false; }
 }
 function terminarTurno(){ if(modoConversacion) escuchar(); else setModo('reposo'); }
@@ -637,7 +656,7 @@ if(!Reconocedor){
   rec.onresult = (ev)=>{ let interim=''; finalTexto='';
     for(let i=0;i<ev.results.length;i++){ const t=ev.results[i][0].transcript; if(ev.results[i].isFinal) finalTexto+=t; else interim+=t; }
     setModo('escucha', (finalTexto||interim) ? (finalTexto||interim) : 'Escuchando'); };
-  rec.onerror = (ev)=>{ if(ev.error==='no-speech') return; };
+  rec.onerror = (ev)=>{ if(ev.error==='no-speech') return; $('estado').textContent = decir('no_entendido'); };
   rec.onend = ()=>{ escuchandoAhora=false; const dicho=finalTexto.trim();
     if(dicho){ if(FRASES_PARAR.test(dicho)){ pararConversacion(); return; } enviar(dicho); }
     else if(modoConversacion){ setModo('escucha','Le escucho'); setTimeout(()=>{ if(modoConversacion&&!ocupado) escuchar(); }, 300); }
@@ -645,7 +664,12 @@ if(!Reconocedor){
 }
 function escuchar(){ if(!rec||escuchandoAhora||ocupado) return; finalTexto='';
   try{ speechSynthesis.cancel(); rec.start(); escuchandoAhora=true; setModo('escucha','Le escucho'); }catch(e){} }
-function iniciarConversacion(){ modoConversacion=true; $('hablar').textContent='■ Detener'; $('hablar').classList.add('activo'); encenderMicOrbe(); escuchar(); }
+let saludado = false;
+function iniciarConversacion(){
+  modoConversacion=true; $('hablar').textContent='■ Detener'; $('hablar').classList.add('activo'); encenderMicOrbe();
+  if(!saludado){ saludado = true; setModo('habla'); hablar(saludo(), escuchar); } // te saluda segun la hora
+  else escuchar();
+}
 function pararConversacion(){ modoConversacion=false; $('hablar').textContent='▶ Conversar'; $('hablar').classList.remove('activo');
   try{ rec&&rec.stop(); }catch(e){} try{ speechSynthesis.cancel(); }catch(e){} try{ audioEl.pause(); }catch(e){} setModo('reposo'); }
 function alternar(){ if(!rec) return; modoConversacion ? pararConversacion() : iniciarConversacion(); }
