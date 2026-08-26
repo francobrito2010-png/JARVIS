@@ -55,6 +55,8 @@ app.get("/health", (_req, res) => {
     modelo: MODELO,
     key: Boolean(process.env.ANTHROPIC_API_KEY),
     db: memoria.DB_PATH,
+    volumen_persistente: Boolean(process.env.RAILWAY_VOLUME_MOUNT_PATH),
+    volumen_ruta: process.env.RAILWAY_VOLUME_MOUNT_PATH || null,
   });
 });
 
