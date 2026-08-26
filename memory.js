@@ -14,11 +14,15 @@ const { DatabaseSync } = require("node:sqlite");
 const path = require("node:path");
 const fs = require("node:fs");
 
-// Ruta del archivo SQLite. Configurable por entorno: en Railway se apunta a un
-// VOLUMEN PERSISTENTE (JARVIS_DB_PATH) para que la memoria no se pierda al
-// reiniciar el contenedor.
+// Ruta del archivo SQLite. En Railway, el volumen persistente expone su carpeta
+// en la variable RAILWAY_VOLUME_MOUNT_PATH; usamos esa carpeta automaticamente
+// para que la memoria sobreviva a los reinicios, sea cual sea la ruta de montaje.
+// En local (sin volumen) cae en ./data/jarvis.db. JARVIS_DB_PATH permite forzar
+// una ruta concreta si hiciera falta.
+const CARPETA_DATOS =
+  process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, "data");
 const DB_PATH =
-  process.env.JARVIS_DB_PATH || path.join(__dirname, "data", "jarvis.db");
+  process.env.JARVIS_DB_PATH || path.join(CARPETA_DATOS, "jarvis.db");
 
 // Asegurar que la carpeta del archivo existe antes de abrirlo.
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
