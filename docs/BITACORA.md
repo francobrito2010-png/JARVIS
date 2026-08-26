@@ -7,6 +7,23 @@ Si te pierdes, empieza por la sección 1.
 
 ## 1. CÓMO USAR JARVIS CADA DÍA
 
+### La forma normal (ya desplegado en internet) 🌐
+
+JARVIS **vive en la nube**, encendido siempre. Para usarlo, desde el móvil o el ordenador,
+abre en el navegador (mejor **Chrome** o **Edge** para la voz):
+
+> **https://jarvis-production-1563d.up.railway.app**
+
+Acepta el micrófono, mantén pulsado el círculo y habla. No hace falta encender nada.
+Puedes **añadirlo a la pantalla de inicio** del móvil para usarlo como una app.
+
+_(Lo de abajo, encender el motor en tu PC con PowerShell, ya solo hace falta si quieres
+probar cambios antes de subirlos.)_
+
+---
+
+### La forma local (solo para desarrollo)
+
 JARVIS son dos cosas trabajando a la vez: un **motor** encendido (el servidor) y **tú
 hablándole** desde otra ventana. Por eso usarás **dos ventanas de PowerShell**.
 
@@ -187,9 +204,20 @@ Prueba (todo hablando normal, sin comandos):
 2. *"recuérdame qué tenía que hacer con el proveedor"* → usó `buscar_memoria`, la encontró
    y la leyó. ✅
 
+**Hito 1 — En la nube (para el móvil): TERMINADO y probado. ✅**
+
+- Código en GitHub: `github.com/francobrito2010-png/JARVIS`.
+- Desplegado en **Railway** (Node 24), con dominio público:
+  **https://jarvis-production-1563d.up.railway.app**
+- **Memoria persistente** en un volumen de Railway (`jarvis-volume`), montado donde el
+  código lo detecta solo vía `RAILWAY_VOLUME_MOUNT_PATH`. Verificado: un dato marcador
+  sobrevivió a un redeploy forzado.
+- La llave `ANTHROPIC_API_KEY` está en las Variables de Railway (no en el repo).
+- **Para actualizar:** al hacer `git push`, si Railway no redespliega solo, entrar a
+  Railway → Deployments → ⋮ → **Redeploy**.
+
 **Lo que viene (pendiente de ti):**
-- **Subir a la nube** (Railway + GitHub Pages) para usarlo en el **móvil**. Necesita tus
-  cuentas. Es lo que faltaba para cerrar del todo el Paso 3.
+- Rematar la **Fase 1 al 100%** y las funciones de la Fase 3 (ver `ROADMAP.md`).
 - **`leer_stock` de B'Live**, cuando pases los datos reales de stock.
 - **Voz premium (ElevenLabs, Paso 6)**, opcional — de momento resuelto gratis con la voz
   Andrés (Natural) en Edge.

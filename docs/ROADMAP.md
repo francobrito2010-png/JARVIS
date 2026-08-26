@@ -18,7 +18,10 @@ voz** (Andrés, gratis) y sabe **tomar notas y buscar** en su memoria. Corre en 
 
 ---
 
-## 🔑 Hito 1 — Sacarlo al bolsillo (desplegar) · EL SALTO CLAVE
+## ✅ Hito 1 — Sacarlo al bolsillo (desplegar) · HECHO (2026-08-26)
+
+**Vive en: https://jarvis-production-1563d.up.railway.app** (Railway, memoria persistente
+en volumen, código en `github.com/francobrito2010-png/JARVIS`). Detalle abajo, ya cumplido:
 
 Poner JARVIS en internet para usarlo en el **móvil** desde cualquier sitio, no solo en el PC.
 - Backend en **Railway** (con volumen persistente, para que la memoria no se borre).
