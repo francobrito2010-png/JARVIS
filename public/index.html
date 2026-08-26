@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0e14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>JARVIS</title>
+  <style>
+    :root {
+      --fondo: #0a0e14;
+      --panel: #121826;
+      --texto: #e6edf3;
+      --tenue: #7d8aa0;
+      --acento: #38bdf8;
+      --acento2: #0ea5e9;
+      --user: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: var(--fondo);
+      color: var(--texto);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column;
+      min-height: 100dvh;
+    }
+    header {
+      text-align: center; padding: 18px 16px 6px;
+      letter-spacing: .35em; font-weight: 600; color: var(--acento);
+    }
+    #estado { text-align: center; color: var(--tenue); min-height: 20px; font-size: 14px; }
+    #conversacion {
+      flex: 1; overflow-y: auto; padding: 12px 16px 4px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .burbuja { max-width: 82%; padding: 10px 14px; border-radius: 16px; line-height: 1.35; white-space: pre-wrap; }
+    .yo { align-self: flex-end; background: var(--user); border-bottom-right-radius: 4px; }
+    .jarvis { align-self: flex-start; background: var(--panel); border-bottom-left-radius: 4px; border: 1px solid #1e293b; }
+    .meta { font-size: 11px; color: var(--tenue); align-self: flex-start; margin-top: -4px; }
+    footer { padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); }
+    #boton {
+      width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 12px; display: block;
+      border: none; cursor: pointer; color: #001018; font-size: 34px;
+      background: radial-gradient(circle at 30% 30%, var(--acento), var(--acento2));
+      box-shadow: 0 0 0 0 rgba(56,189,248,.6); transition: transform .08s, box-shadow .3s;
+      user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    #boton:active { transform: scale(.94); }
+    #boton.escuchando { animation: pulso 1.2s infinite; }
+    @keyframes pulso {
+      0% { box-shadow: 0 0 0 0 rgba(56,189,248,.55); }
+      100% { box-shadow: 0 0 0 26px rgba(56,189,248,0); }
+    }
+    #pista { text-align: center; color: var(--tenue); font-size: 13px; margin-bottom: 10px; }
+    #fila { display: flex; gap: 8px; }
+    #texto {
+      flex: 1; background: var(--panel); border: 1px solid #1e293b; color: var(--texto);
+      border-radius: 12px; padding: 12px 14px; font-size: 15px; outline: none;
+    }
+    #enviar { background: var(--acento); border: none; color: #001018; font-weight: 600; border-radius: 12px; padding: 0 18px; cursor: pointer; }
+    #filaVoz { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--tenue); font-size: 13px; }
+    #voz { flex: 1; background: var(--panel); border: 1px solid #1e293b; color: var(--texto); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+    #probarVoz { background: var(--user); border: 1px solid #1e293b; color: var(--texto); border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+    .aviso { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <header>J · A · R · V · I · S</header>
+  <div id="estado">Mantén pulsado el círculo y habla</div>
+  <div id="conversacion"></div>
+
+  <footer>
+    <button id="boton" title="Mantén pulsado para hablar">🎙️</button>
+    <div id="pista">Mantén pulsado para hablar · suéltalo al terminar</div>
+    <div id="fila">
+      <input id="texto" type="text" placeholder="…o escríbele aquí" autocomplete="off" />
+      <button id="enviar">Enviar</button>
+    </div>
+    <div id="filaVoz">
+      <label for="voz">Voz</label>
+      <select id="voz"><option>cargando voces…</option></select>
+      <button id="probarVoz" title="Oír una frase con esta voz">▶︎</button>
+    </div>
+  </footer>
+
+  <script>
+    // La pagina se sirve desde el propio backend, asi que las peticiones van al
+    // mismo origen. Al desplegar en Railway, pon aqui la URL publica del backend.
+    const BACKEND = "";
+
+    const $estado = document.getElementById("estado");
+    const $conv = document.getElementById("conversacion");
+    const $boton = document.getElementById("boton");
+    const $texto = document.getElementById("texto");
+    const $enviar = document.getElementById("enviar");
+
+    function burbuja(clase, texto) {
+      const div = document.createElement("div");
+      div.className = "burbuja " + clase;
+      div.textContent = texto;
+      $conv.appendChild(div);
+      $conv.scrollTop = $conv.scrollHeight;
+      return div;
+    }
+    function meta(texto) {
+      const div = document.createElement("div");
+      div.className = "meta";
+      div.textContent = texto;
+      $conv.appendChild(div);
+      $conv.scrollTop = $conv.scrollHeight;
+    }
+
+    // --- Voz de vuelta (TTS del navegador) ---
+    const $voz = document.getElementById("voz");
+    const $probarVoz = document.getElementById("probarVoz");
+    let voces = [];
+
+    // Tono más grave y más lento = suena más sereno, menos "robot".
+    const RITMO = 0.90;   // velocidad (1 = normal) — más bajo = más calmado
+    const TONO = 0.85;    // grave (1 = normal)
+
+    // Puntúa las voces para poner arriba las mejores: primero las "naturales/online"
+    // en español, luego el resto de español, luego todo lo demás.
+    function puntuar(v) {
+      const n = (v.name || "").toLowerCase();
+      let p = 0;
+      if (v.lang && v.lang.toLowerCase().startsWith("es")) p += 100;
+      if (/natural|online|neural/.test(n)) p += 50;
+      // Preferimos voz masculina para el carácter de JARVIS.
+      if (/andr[eé]s|pablo|jorge|ra[uú]l|diego|miguel|[aá]lvaro|dar[ií]o|enrique|carlos/.test(n)) p += 30;
+      if (/(google|microsoft)/.test(n)) p += 10;
+      return p;
+    }
+
+    function cargarVoces() {
+      voces = speechSynthesis.getVoices().slice().sort((a, b) => puntuar(b) - puntuar(a));
+      if (voces.length === 0) return;
+      const guardada = localStorage.getItem("jarvis_voz");
+      $voz.innerHTML = "";
+      voces.forEach((v, i) => {
+        const o = document.createElement("option");
+        o.value = i;
+        o.textContent = `${v.name} — ${v.lang}`;
+        if (v.name === guardada) o.selected = true;
+        $voz.appendChild(o);
+      });
+    }
+
+    function vozElegida() {
+      return voces[Number($voz.value)] || voces.find(v => v.lang && v.lang.startsWith("es")) || voces[0];
+    }
+
+    function hablar(texto) {
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(texto);
+        const v = vozElegida();
+        if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "es-ES"; }
+        u.rate = RITMO;
+        u.pitch = TONO;
+        speechSynthesis.speak(u);
+      } catch (e) { /* sin voz: no pasa nada, el texto ya esta en pantalla */ }
+    }
+
+    $voz.addEventListener("change", () => {
+      const v = vozElegida();
+      if (v) localStorage.setItem("jarvis_voz", v.name);
+    });
+    $probarVoz.addEventListener("click", () =>
+      hablar("A sus órdenes, señor Franco. ¿En qué puedo ayudarle?")
+    );
+
+    // --- Enviar al backend ---
+    let enviando = false;
+    async function enviar(mensaje) {
+      mensaje = (mensaje || "").trim();
+      if (!mensaje || enviando) return;
+      enviando = true;
+      burbuja("yo", mensaje);
+      $estado.textContent = "Pensando…";
+      const t0 = performance.now();
+      try {
+        const r = await fetch(BACKEND + "/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mensaje })
+        });
+        const data = await r.json();
+        const total = Math.round(performance.now() - t0);
+        if (!r.ok) {
+          burbuja("jarvis", "⚠️ " + (data.error || "Error del servidor"));
+          $estado.textContent = "Error";
+        } else {
+          burbuja("jarvis", data.respuesta);
+          const servidor = data._meta && data._meta.ms ? data._meta.ms : "?";
+          meta(`⏱️ ${total} ms (servidor ${servidor} ms)`);
+          $estado.textContent = "Listo";
+          hablar(data.respuesta);
+        }
+      } catch (e) {
+        burbuja("jarvis", "⚠️ No pude contactar con el backend. ¿Está encendido?");
+        $estado.textContent = "Sin conexión";
+      } finally {
+        enviando = false;
+      }
+    }
+
+    $enviar.addEventListener("click", () => { const m = $texto.value; $texto.value = ""; enviar(m); });
+    $texto.addEventListener("keydown", e => { if (e.key === "Enter") { const m = $texto.value; $texto.value = ""; enviar(m); } });
+
+    // --- Voz a texto (STT del navegador) ---
+    const Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Reconocedor) {
+      $boton.style.display = "none";
+      document.getElementById("pista").innerHTML =
+        '<span class="aviso">Este navegador no reconoce voz. Usa el campo de texto de abajo (o abre la página en Chrome).</span>';
+    } else {
+      const rec = new Reconocedor();
+      rec.lang = "es-ES";
+      rec.interimResults = true;
+      rec.continuous = false;
+      let finalTexto = "";
+      let escuchando = false;
+
+      rec.onresult = (ev) => {
+        let interim = "";
+        finalTexto = "";
+        for (let i = 0; i < ev.results.length; i++) {
+          const t = ev.results[i][0].transcript;
+          if (ev.results[i].isFinal) finalTexto += t;
+          else interim += t;
+        }
+        $estado.textContent = "🎙️ " + (finalTexto || interim || "…");
+      };
+      rec.onerror = (ev) => { $estado.textContent = "No te oí bien (" + ev.error + ")"; };
+      rec.onend = () => {
+        $boton.classList.remove("escuchando");
+        escuchando = false;
+        if (finalTexto.trim()) enviar(finalTexto);
+        else $estado.textContent = "Mantén pulsado el círculo y habla";
+      };
+
+      function empezar(e) {
+        e.preventDefault();
+        if (escuchando) return;
+        finalTexto = "";
+        try { rec.start(); escuchando = true; $boton.classList.add("escuchando"); $estado.textContent = "🎙️ Escuchando…"; }
+        catch (err) { /* start() a veces se solapa; se ignora */ }
+      }
+      function parar(e) { e.preventDefault(); if (escuchando) { try { rec.stop(); } catch (err) {} } }
+
+      // Mantener pulsado = hablar (funciona con ratón y con dedo)
+      $boton.addEventListener("pointerdown", empezar);
+      $boton.addEventListener("pointerup", parar);
+      $boton.addEventListener("pointercancel", parar);
+      $boton.addEventListener("pointerleave", parar);
+    }
+
+    // Cargar la lista de voces (algunos navegadores la traen con retraso)
+    if ("speechSynthesis" in window) {
+      cargarVoces();
+      speechSynthesis.onvoiceschanged = cargarVoces;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# La API key nunca va al repositorio
+.env
+
+# Dependencias
+node_modules/
+
+# Base de datos local (memoria de JARVIS: perfil, hechos, conversaciones)
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Logs y basura del sistema
+*.log
+.DS_Store

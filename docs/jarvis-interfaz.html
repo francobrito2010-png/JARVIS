@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARVIS — Propuesta de interfaz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B0E11;
+  --panel:#141920;
+  --panel-2:#1C232B;
+  --line:#28313B;
+  --amber:#E8A33D;
+  --ember:#C4642B;
+  --bone:#E6E2D8;
+  --muted:#7A8592;
+  --ok:#5FA88B;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:var(--ink);
+  color:var(--bone);
+  font-family:'IBM Plex Sans',system-ui,sans-serif;
+  font-weight:300;
+  -webkit-font-smoothing:antialiased;
+  padding:0 0 80px;
+}
+
+/* ---- page header ---- */
+.masthead{
+  padding:56px 24px 40px;
+  max-width:1180px;
+  margin:0 auto;
+  border-bottom:1px solid var(--line);
+}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--amber);
+  margin-bottom:18px;
+}
+.masthead h1{
+  font-family:'IBM Plex Sans Condensed',sans-serif;
+  font-weight:700;
+  font-size:clamp(38px,7vw,68px);
+  line-height:.98;
+  letter-spacing:-.02em;
+}
+.masthead h1 span{color:var(--muted)}
+.masthead p{
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.65;
+  max-width:46ch;
+  margin-top:20px;
+}
+
+/* ---- deck ---- */
+.deck{
+  max-width:1180px;
+  margin:0 auto;
+  padding:48px 24px 0;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:56px 40px;
+  justify-items:center;
+}
+
+.slot{width:100%;max-width:330px}
+
+.slot-label{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  margin-bottom:16px;
+  border-top:1px solid var(--line);
+  padding-top:12px;
+}
+.slot-label b{
+  font-family:'IBM Plex Sans Condensed',sans-serif;
+  font-weight:600;
+  font-size:17px;
+  letter-spacing:.01em;
+}
+.slot-label i{
+  font-family:'IBM Plex Mono',monospace;
+  font-style:normal;
+  font-size:10px;
+  letter-spacing:.16em;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+.slot-note{
+  font-size:12.5px;
+  color:var(--muted);
+  line-height:1.6;
+  margin-top:14px;
+}
+
+/* ---- phone frame ---- */
+.phone{
+  width:100%;
+  aspect-ratio:390/812;
+  background:var(--ink);
+  border:1px solid var(--line);
+  border-radius:34px;
+  padding:9px;
+  box-shadow:0 30px 70px -30px #000;
+  position:relative;
+}
+.screen{
+  width:100%;height:100%;
+  border-radius:26px;
+  overflow:hidden;
+  background:radial-gradient(120% 80% at 50% 0%,#161D26 0%,var(--ink) 62%);
+  display:flex;
+  flex-direction:column;
+  position:relative;
+}
+
+/* status bar */
+.sysbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:13px 20px 0;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:.06em;
+  flex-shrink:0;
+}
+.sysbar .dots{display:flex;gap:4px;align-items:center}
+.sysbar .dots u{width:3px;height:3px;border-radius:50%;background:var(--muted);text-decoration:none}
+
+/* ---- signature: instrument bar array ---- */
+.stage{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:26px;
+  padding:0 26px;
+  min-height:0;
+}
+.greet{text-align:center}
+.greet .time{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:.2em;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:9px;
+}
+.greet h2{
+  font-family:'IBM Plex Sans Condensed',sans-serif;
+  font-weight:600;
+  font-size:25px;
+  line-height:1.15;
+  letter-spacing:-.01em;
+}
+
+.meter{
+  width:100%;
+  height:86px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.meter b{
+  flex:1;
+  max-width:5px;
+  border-radius:2px;
+  background:var(--amber);
+  height:4px;
+  opacity:.5;
+  transition:opacity .35s;
+}
+
+.readout{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  letter-spacing:.17em;
+  text-transform:uppercase;
+  color:var(--amber);
+  display:flex;align-items:center;gap:8px;
+  min-height:14px;
+}
+.readout s{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--amber);text-decoration:none;
+  animation:pulse 1.9s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+
+.hint{
+  font-size:11.5px;color:var(--muted);text-align:center;
+  border:1px solid var(--line);border-radius:100px;
+  padding:7px 15px;
+}
+
+/* bottom rail */
+.rail{
+  flex-shrink:0;
+  border-top:1px solid var(--line);
+  display:flex;
+}
+.rail a{
+  flex:1;text-align:center;padding:14px 0 20px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;
+}
+.rail a.on{color:var(--amber)}
+.rail a em{display:block;font-style:normal;font-size:15px;margin-bottom:5px;opacity:.9}
+
+/* ---- conversation ---- */
+.thread{
+  flex:1;overflow:hidden;
+  padding:22px 20px;
+  display:flex;flex-direction:column;gap:16px;
+}
+.turn{max-width:88%}
+.turn .who{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:6px;
+}
+.turn p{font-size:13.5px;line-height:1.55}
+.turn.me{align-self:flex-end;text-align:right}
+.turn.me p{color:var(--bone);opacity:.72}
+.turn.j{border-left:2px solid var(--amber);padding-left:13px}
+.turn.j .who{color:var(--amber)}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:13px 15px;
+  margin-top:11px;
+}
+.card .k{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:9px;
+}
+.row{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:12.5px;padding:5px 0;
+}
+.row + .row{border-top:1px solid var(--line)}
+.row span{font-family:'IBM Plex Mono',monospace;font-size:11.5px}
+.row .low{color:var(--ember)}
+.row .fine{color:var(--muted)}
+
+/* ---- translator ---- */
+.trans{flex:1;display:flex;flex-direction:column;min-height:0}
+.langbar{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  padding:16px 20px;border-bottom:1px solid var(--line);
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;
+}
+.langbar b{color:var(--bone);font-weight:400}
+.langbar u{color:var(--amber);text-decoration:none}
+.heard,.said{padding:22px 20px;flex:1;display:flex;flex-direction:column;justify-content:center}
+.heard{border-bottom:1px solid var(--line);background:rgba(255,255,255,.012)}
+.tag{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:11px;
+}
+.heard p{font-size:15px;line-height:1.5;color:var(--muted)}
+.said .tag{color:var(--amber)}
+.said p{font-size:17px;line-height:1.45;font-weight:400}
+.lag{
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;
+  color:var(--muted);letter-spacing:.1em;margin-top:14px;
+}
+
+/* ---- home ---- */
+.rooms{flex:1;padding:20px;overflow:hidden}
+.rooms h3{
+  font-family:'IBM Plex Sans Condensed',sans-serif;
+  font-size:21px;font-weight:600;margin-bottom:4px;
+}
+.rooms .sub{font-size:11.5px;color:var(--muted);margin-bottom:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.tile{
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:13px;padding:13px;
+}
+.tile.lit{background:linear-gradient(160deg,#2A2013,var(--panel));border-color:#4A3A1E}
+.tile em{font-style:normal;font-size:16px;opacity:.85;display:block;margin-bottom:20px}
+.tile .n{font-size:12.5px;line-height:1.3}
+.tile .s{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin-top:4px;
+}
+.tile.lit .s{color:var(--amber)}
+
+.confirm{
+  margin-top:14px;background:var(--panel-2);
+  border:1px solid var(--ember);border-radius:13px;padding:14px;
+}
+.confirm .k{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ember);margin-bottom:8px;
+}
+.confirm p{font-size:12.5px;line-height:1.5;margin-bottom:12px}
+.confirm .btns{display:flex;gap:8px}
+.confirm button{
+  flex:1;padding:9px;border-radius:8px;font-size:11.5px;
+  font-family:'IBM Plex Sans',sans-serif;cursor:pointer;
+  border:1px solid var(--line);background:transparent;color:var(--muted);
+}
+.confirm button.go{background:var(--amber);color:var(--ink);border-color:var(--amber);font-weight:500}
+
+/* ---- spec strip ---- */
+.spec{
+  max-width:1180px;margin:76px auto 0;padding:0 24px;
+}
+.spec h4{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:24px;
+  border-top:1px solid var(--line);padding-top:14px;
+}
+.tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:20px}
+.tok .sw{height:52px;border-radius:8px;border:1px solid var(--line);margin-bottom:9px}
+.tok b{display:block;font-size:12.5px;font-weight:500;margin-bottom:2px}
+.tok i{
+  font-family:'IBM Plex Mono',monospace;font-style:normal;
+  font-size:10.5px;color:var(--muted);
+}
+
+@media (max-width:640px){
+  .deck{gap:44px 0;padding-top:36px}
+  .masthead{padding:40px 20px 32px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">Propuesta de interfaz · v1</div>
+  <h1>JARVIS<br><span>asistente de Franco</span></h1>
+  <p>Cuatro pantallas de la Fase 1 y 2. La dirección visual es un panel de instrumentos, no una consola de ciencia ficción: ámbar cálido sobre tinta, tipografía de ingeniería, y un solo elemento que se mueve.</p>
+</header>
+
+<div class="deck">
+
+  <!-- 1 -->
+  <section class="slot">
+    <div class="slot-label"><b>Reposo y escucha</b><i>Pantalla principal</i></div>
+    <div class="phone"><div class="screen">
+      <div class="sysbar"><span>18:42</span><span class="dots"><u></u><u></u><u></u> BT · 84%</span></div>
+      <div class="stage">
+        <div class="greet">
+          <div class="time">Lunes · 24 agosto</div>
+          <h2>Buenas tardes,<br>señor Franco</h2>
+        </div>
+        <div class="meter" id="meter" role="button" tabindex="0" aria-label="Cambiar estado"></div>
+        <div class="readout" id="readout"><s></s><span>En reposo</span></div>
+        <div class="hint" id="hint">Diga «Jarvis» o pulse el auricular</div>
+      </div>
+      <nav class="rail">
+        <a class="on" href="#"><em>◈</em>Voz</a>
+        <a href="#"><em>⌸</em>Traducir</a>
+        <a href="#"><em>⬒</em>Casa</a>
+        <a href="#"><em>≡</em>Notas</a>
+      </nav>
+    </div></div>
+    <p class="slot-note">Toque la barra para ver los cuatro estados: reposo, escuchando, procesando y respondiendo.</p>
+  </section>
+
+  <!-- 2 -->
+  <section class="slot">
+    <div class="slot-label"><b>Conversación</b><i>Modo texto</i></div>
+    <div class="phone"><div class="screen">
+      <div class="sysbar"><span>18:43</span><span class="dots"><u></u><u></u><u></u> BT · 84%</span></div>
+      <div class="thread">
+        <div class="turn me"><div class="who">Franco</div><p>¿Cómo va el stock del bar?</p></div>
+        <div class="turn j">
+          <div class="who">Jarvis</div>
+          <p>Tres referencias por debajo del mínimo, señor.</p>
+          <div class="card">
+            <div class="k">B'Live · bajo mínimo</div>
+            <div class="row">Ron Diplomático <span class="low">2 uds</span></div>
+            <div class="row">Tónica Fever-Tree <span class="low">6 uds</span></div>
+            <div class="row">Carbón shisha <span class="low">1 caja</span></div>
+          </div>
+        </div>
+        <div class="turn me"><div class="who">Franco</div><p>Recuérdamelo mañana al abrir</p></div>
+        <div class="turn j">
+          <div class="who">Jarvis</div>
+          <p>Hecho. Se lo diré al llegar al bar, no a una hora fija.</p>
+        </div>
+      </div>
+      <nav class="rail">
+        <a class="on" href="#"><em>◈</em>Voz</a>
+        <a href="#"><em>⌸</em>Traducir</a>
+        <a href="#"><em>⬒</em>Casa</a>
+        <a href="#"><em>≡</em>Notas</a>
+      </nav>
+    </div></div>
+    <p class="slot-note">Los datos van en tarjeta, no en párrafo. Se leen de un vistazo con el teléfono en la barra.</p>
+  </section>
+
+  <!-- 3 -->
+  <section class="slot">
+    <div class="slot-label"><b>Traductor en vivo</b><i>Fase 4</i></div>
+    <div class="phone"><div class="screen">
+      <div class="sysbar"><span>18:51</span><span class="dots"><u></u><u></u><u></u> BT · 82%</span></div>
+      <div class="trans">
+        <div class="langbar"><b>Português</b><u>→</u><b>Español</b></div>
+        <div class="heard">
+          <div class="tag">Oído</div>
+          <p>Boa noite, tem mesa para duas pessoas lá fora?</p>
+        </div>
+        <div class="said">
+          <div class="tag">Al oído</div>
+          <p>Buenas noches, ¿tienen mesa para dos personas fuera?</p>
+          <div class="lag">0,9 s · idioma detectado</div>
+        </div>
+      </div>
+      <nav class="rail">
+        <a href="#"><em>◈</em>Voz</a>
+        <a class="on" href="#"><em>⌸</em>Traducir</a>
+        <a href="#"><em>⬒</em>Casa</a>
+        <a href="#"><em>≡</em>Notas</a>
+      </nav>
+    </div></div>
+    <p class="slot-note">Dos bloques y nada más: lo que se oye arriba, lo que llega al auricular abajo. Sin historial que distraiga.</p>
+  </section>
+
+  <!-- 4 -->
+  <section class="slot">
+    <div class="slot-label"><b>Casa</b><i>Fase 5</i></div>
+    <div class="phone"><div class="screen">
+      <div class="sysbar"><span>23:14</span><span class="dots"><u></u><u></u><u></u> BT · 61%</span></div>
+      <div class="rooms">
+        <h3>Casa</h3>
+        <div class="sub">4 dispositivos · todo respondiendo</div>
+        <div class="grid2">
+          <div class="tile lit"><em>◐</em><div class="n">Salón</div><div class="s">Encendido · 30%</div></div>
+          <div class="tile"><em>◑</em><div class="n">Cocina</div><div class="s">Apagado</div></div>
+          <div class="tile lit"><em>◈</em><div class="n">Escritorio</div><div class="s">Modo trabajo</div></div>
+          <div class="tile"><em>⬓</em><div class="n">Ventanas</div><div class="s">Cerradas</div></div>
+        </div>
+        <div class="confirm">
+          <div class="k">Confirmación requerida</div>
+          <p>«Modo noche» apaga todas las luces y cierra las ventanas. Son las 23:14.</p>
+          <div class="btns"><button>Cancelar</button><button class="go">Confirmar</button></div>
+        </div>
+      </div>
+      <nav class="rail">
+        <a href="#"><em>◈</em>Voz</a>
+        <a href="#"><em>⌸</em>Traducir</a>
+        <a class="on" href="#"><em>⬒</em>Casa</a>
+        <a href="#"><em>≡</em>Notas</a>
+      </nav>
+    </div></div>
+    <p class="slot-note">Ninguna acción física ocurre sin confirmar. Es la regla de seguridad del documento, hecha pantalla.</p>
+  </section>
+
+</div>
+
+<section class="spec">
+  <h4>Paleta</h4>
+  <div class="tokens">
+    <div class="tok"><div class="sw" style="background:#0B0E11"></div><b>Tinta</b><i>#0B0E11 · fondo</i></div>
+    <div class="tok"><div class="sw" style="background:#141920"></div><b>Panel</b><i>#141920 · tarjetas</i></div>
+    <div class="tok"><div class="sw" style="background:#E8A33D"></div><b>Ámbar</b><i>#E8A33D · señal</i></div>
+    <div class="tok"><div class="sw" style="background:#C4642B"></div><b>Brasa</b><i>#C4642B · alerta</i></div>
+    <div class="tok"><div class="sw" style="background:#E6E2D8"></div><b>Hueso</b><i>#E6E2D8 · texto</i></div>
+    <div class="tok"><div class="sw" style="background:#7A8592"></div><b>Apagado</b><i>#7A8592 · secundario</i></div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var N = 44;
+  var meter = document.getElementById('meter');
+  var readout = document.getElementById('readout').querySelector('span');
+  var hint = document.getElementById('hint');
+  var bars = [];
+
+  for (var i=0;i<N;i++){
+    var b = document.createElement('b');
+    meter.appendChild(b);
+    bars.push(b);
+  }
+
+  var states = [
+    {id:'idle',  label:'En reposo',   hint:'Diga «Jarvis» o pulse el auricular'},
+    {id:'listen',label:'Escuchando',  hint:'Le escucho, señor'},
+    {id:'think', label:'Procesando',  hint:'Un momento'},
+    {id:'speak', label:'Respondiendo',hint:'Tres referencias bajo mínimo'}
+  ];
+  var s = 0;
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function height(i, t, mode){
+    var c = (i - (N-1)/2) / ((N-1)/2);
+    if (mode === 'idle')   return 3 + 2.5 * (1 + Math.sin(t/900 + i*0.18));
+    if (mode === 'listen') return 4 + 34 * Math.pow(1-Math.abs(c),1.7) * (0.45 + 0.55*Math.abs(Math.sin(t/150 + i*0.9)));
+    if (mode === 'think'){
+      var head = ((t/9) % (N*2));
+      var d = Math.abs(i - (head > N ? N*2-head : head));
+      return 3 + 26 * Math.exp(-d*d/9);
+    }
+    return 4 + 26 * Math.pow(1-Math.abs(c),0.9) * (0.5 + 0.5*Math.sin(t/95 + i*0.55));
+  }
+
+  function paint(t){
+    var mode = states[s].id;
+    for (var i=0;i<N;i++){
+      var h = height(i,t,mode);
+      bars[i].style.height = h.toFixed(1)+'px';
+      bars[i].style.opacity = (mode==='idle' ? 0.4 : 0.55 + Math.min(h/40,0.45)).toFixed(2);
+    }
+  }
+
+  function loop(t){ paint(t); requestAnimationFrame(loop); }
+  if (reduced) { paint(0); } else { requestAnimationFrame(loop); }
+
+  function next(){
+    s = (s+1) % states.length;
+    readout.textContent = states[s].label;
+    hint.textContent = states[s].hint;
+    if (reduced) paint(0);
+  }
+  meter.addEventListener('click', next);
+  meter.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); }
+  });
+})();
+</script>
+</body>
+</html>
