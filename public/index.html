@@ -449,23 +449,41 @@ pintarAgenda(); setInterval(pintarAgenda, 60*1000);
 
 /* ---------- Voz de vuelta (TTS) ---------- */
 let voces=[];
-function puntuar(v){ const n=(v.name||'').toLowerCase(); let p=0;
-  if(v.lang&&v.lang.toLowerCase().startsWith('es')) p+=100;
+function puntuar(v){
+  const n=(v.name||'').toLowerCase(); const l=(v.lang||'').toLowerCase(); let p=0;
+  if(l.startsWith('es')) p+=100;
+  if(/es[-_](us|mx|gt|co|ar|pe|cl|419)/.test(l)) p+=25; // acento latinoamericano, como Andrés
   if(/natural|online|neural/.test(n)) p+=50;
-  if(/andr[eé]s|pablo|jorge|ra[uú]l|diego|miguel|[aá]lvaro|dar[ií]o|enrique|carlos/.test(n)) p+=30;
+  if(/andr[eé]s/.test(n)) p+=200;                        // Andrés (Guatemala): la preferida de Franco
+  else if(/pablo|jorge|ra[uú]l|diego|miguel|[aá]lvaro|dar[ií]o|enrique|carlos|gustavo|luis|juan/.test(n)) p+=30;
   return p; }
 function cargarVoces(){ voces=speechSynthesis.getVoices().slice().sort((a,b)=>puntuar(b)-puntuar(a)); }
 function vozElegida(){ return voces.find(v=>v.lang&&v.lang.toLowerCase().startsWith('es')) || voces[0]; }
 if('speechSynthesis' in window){ cargarVoces(); speechSynthesis.onvoiceschanged=cargarVoces; }
+/* En el móvil la voz está bloqueada hasta que el usuario toca algo: la
+   "desbloqueamos" con un enunciado vacío dentro del primer gesto. */
+let vozLista=false;
+function desbloquearVoz(){
+  if(vozLista || !('speechSynthesis' in window)) return;
+  try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); }catch(e){}
+  cargarVoces(); vozLista=true;
+}
+document.addEventListener('click', desbloquearVoz, true);
+document.addEventListener('touchend', desbloquearVoz, true);
+
 function hablar(texto, alTerminar){
   let hecho=false; const fin=()=>{ if(!hecho){hecho=true; alTerminar&&alTerminar();} };
+  if(!('speechSynthesis' in window)){ setTimeout(fin,300); return; }
   try{
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(texto);
     const v=vozElegida(); if(v){u.voice=v;u.lang=v.lang;} else u.lang='es-ES';
-    u.rate=0.98; u.pitch=0.9; u.onend=fin; u.onerror=fin;
+    u.rate=0.98; u.pitch=0.9; u.volume=1; u.onend=fin; u.onerror=fin;
     speechSynthesis.speak(u);
-    setTimeout(fin, Math.min(15000, 1600 + texto.length*90));
+    // Android suele dejar la síntesis en pausa: forzar reanudar.
+    setTimeout(()=>{ try{ speechSynthesis.resume(); }catch(e){} }, 250);
+    // Red de seguridad generosa por si 'onend' no dispara (que no corte la voz).
+    setTimeout(fin, Math.min(30000, 3000 + texto.length*130));
   }catch(e){ setTimeout(fin,400); }
 }
 
