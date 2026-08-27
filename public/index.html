@@ -20,7 +20,7 @@
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;overflow:hidden;background:var(--tinta);font-family:var(--mono);color:var(--hueso)}
   canvas{display:block}
-  #escena{position:fixed;inset:0;z-index:0}
+  #escena{position:fixed;inset:0;z-index:0;touch-action:manipulation}
 
   /* ---- HUD ---- */
   .hud{position:fixed;z-index:5;pointer-events:none}
@@ -498,12 +498,15 @@ $('enviar').addEventListener('click', ()=>{ const m=$('texto').value; $('texto')
 $('texto').addEventListener('keydown', e=>{ if(e.key==='Enter'){ const m=$('texto').value; $('texto').value=''; enviar(m); } });
 
 /* --- Cámara y visión --- */
-/* Doble toque en la bola (el orbe) abre la cámara */
-let _tapOrbe = 0;
-$('escena').addEventListener('pointerdown', ()=>{
+/* Doble toque en la bola (o en cualquier zona libre) abre la cámara.
+   Usamos 'click' (el gesto que iOS acepta para abrir la cámara) y excluimos
+   los controles de abajo para no dispararla sin querer. */
+let _tapCam = 0;
+document.addEventListener('click', (e)=>{
+  if(e.target.closest('#consola')) return;
   const ahora = Date.now();
-  if(ahora - _tapOrbe < 350){ _tapOrbe = 0; $('camInput').click(); }
-  else _tapOrbe = ahora;
+  if(ahora - _tapCam < 450){ _tapCam = 0; $('camInput').click(); }
+  else _tapCam = ahora;
 });
 $('camInput').addEventListener('change', async ()=>{
   const f = $('camInput').files && $('camInput').files[0];
