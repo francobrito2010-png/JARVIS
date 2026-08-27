@@ -565,14 +565,19 @@ if(!Reconocedor){
   rec.onerror = (ev)=>{ if(ev.error==='no-speech') return; $('estado').textContent = decir('no_entendido'); };
   rec.onend = ()=>{ escuchandoAhora=false; const dicho=finalTexto.trim();
     if(dicho){ if(FRASES_PARAR.test(dicho)){ pararConversacion(); return; } enviar(dicho); }
-    else if(modoConversacion){ setModo('escucha','Le escucho'); setTimeout(()=>{ if(modoConversacion&&!ocupado) escuchar(); }, 300); }
+    else if(modoConversacion){ // silencio: paramos limpio, sin bucle de pitidos
+      modoConversacion=false; $('hablar').textContent='▶ Conversar'; $('hablar').classList.remove('activo');
+      setModo('reposo','Toca "Conversar" para hablar');
+    }
     else setModo('reposo'); };
 }
 function escuchar(){ if(!rec||escuchandoAhora||ocupado) return; finalTexto='';
   try{ speechSynthesis.cancel(); rec.start(); escuchandoAhora=true; setModo('escucha','Le escucho'); }catch(e){} }
 let saludado = false;
 function iniciarConversacion(){
-  modoConversacion=true; $('hablar').textContent='■ Detener'; $('hablar').classList.add('activo'); encenderMicOrbe();
+  modoConversacion=true; $('hablar').textContent='■ Detener'; $('hablar').classList.add('activo');
+  // OJO: NO abrimos el microfono para la bola (getUserMedia): en Android pelea
+  // con el reconocimiento de voz y lo hace reiniciarse en bucle (pitidos).
   if(!saludado){ saludado = true; setModo('habla'); hablar(saludo(), escuchar); } // te saluda segun la hora
   else escuchar();
 }
