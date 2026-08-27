@@ -58,6 +58,8 @@ app.get("/health", (_req, res) => {
     db: memoria.DB_PATH,
     volumen_persistente: Boolean(process.env.RAILWAY_VOLUME_MOUNT_PATH),
     volumen_ruta: process.env.RAILWAY_VOLUME_MOUNT_PATH || null,
+    eleven: Boolean(ELEVEN_KEY),
+    eleven_voz: ELEVEN_VOICE,
   });
 });
 
