@@ -97,7 +97,7 @@ const VOZ = process.env.JARVIS_VOZ || "es-GT-AndresNeural";
 // ElevenLabs (voz premium). Si estan puestas la llave y el id de voz, JARVIS
 // habla con esa voz; si falla o no estan, cae solo a la voz de Edge (Andres).
 const ELEVEN_KEY = process.env.ELEVENLABS_API_KEY || "";
-const ELEVEN_VOICE = process.env.ELEVENLABS_VOICE_ID || "";
+const ELEVEN_VOICE = process.env.ELEVENLABS_VOICE_ID || "aEiRfUm5MSmCddb7Xd2n";
 const ELEVEN_MODEL = process.env.ELEVENLABS_MODEL || "eleven_multilingual_v2";
 
 // Reutilizamos la conexion por voz: evita el saludo (handshake) en cada turno,
