@@ -98,28 +98,6 @@
 
 <div class="hud" id="estado">Reposo</div>
 
-<div class="hud panel" id="superior">
-  <div id="horaGrande">--:--</div>
-  <div id="fechaGrande">—</div>
-  <div id="lugar">ODIVELAS · PT</div>
-</div>
-
-<div class="hud panel" id="clima">
-  <div class="rotulo">Clima</div>
-  <div id="climaTemp">--°</div>
-  <div id="climaDesc">cargando…</div>
-</div>
-
-<div class="hud panel" id="mundo">
-  <div class="rotulo">Husos horarios</div>
-  <div id="ciudades"></div>
-</div>
-
-<div class="hud panel" id="agenda">
-  <div class="rotulo">Agenda · Notas</div>
-  <div id="notas"><div id="agendaVacia">—</div></div>
-</div>
-
 <div class="hud" id="dialogo">
   <div id="dTu"></div>
   <div id="dJarvis"></div>
@@ -129,15 +107,9 @@
   <div class="crow">
     <button id="hablar">▶ Conversar</button>
     <input id="texto" type="text" placeholder="…o escríbele" autocomplete="off">
-    <button id="camBtn" title="Enseñarle una foto">📷</button>
     <button id="enviar">Enviar</button>
   </div>
   <input type="file" accept="image/*" capture="environment" id="camInput" style="display:none">
-  <div class="crow">
-    <span id="vozLbl">Voz</span>
-    <select id="vozSel"></select>
-    <button id="probarVoz">Probar ▶</button>
-  </div>
 </div>
 
 <div id="fallo">No se pudo cargar el orbe 3D.<br>Comprueba la conexión. El resto de JARVIS sigue funcionando.</div>
@@ -426,62 +398,6 @@ function saludo(){
 const NOMBRE_ESTADO = { reposo:'Reposo', escucha:'Escuchando', piensa:'Procesando', habla:'Respondiendo' };
 function setModo(m, txt){ O.modo(m); $('estado').textContent = txt || NOMBRE_ESTADO[m] || ''; }
 
-/* ---------- Reloj + husos ---------- */
-const CIUDADES = [
-  { n:'Madrid',    tz:'Europe/Madrid' },
-  { n:'Londres',   tz:'Europe/London' },
-  { n:'Nueva York',tz:'America/New_York' },
-  { n:'Tokio',     tz:'Asia/Tokyo' },
-];
-function hhmm(d, tz){ return new Intl.DateTimeFormat('es-ES',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:tz}).format(d); }
-function pintarReloj(){
-  const ahora = new Date();
-  $('horaGrande').textContent = hhmm(ahora,'Europe/Lisbon');
-  $('fechaGrande').textContent = new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'Europe/Lisbon'}).format(ahora);
-  $('ciudades').innerHTML = CIUDADES.map(c=>`<div class="ciudad"><span>${c.n}</span><b>${hhmm(ahora,c.tz)}</b></div>`).join('');
-}
-pintarReloj(); setInterval(pintarReloj, 1000);
-
-/* ---------- Clima (Open-Meteo, gratis, sin llave) ---------- */
-const LAT = 38.79, LON = -9.18; // Odivelas
-function climaTexto(code){
-  if(code===0) return ['Despejado','☀️'];
-  if(code<=2) return ['Poco nuboso','🌤️'];
-  if(code===3) return ['Nublado','☁️'];
-  if(code<=48) return ['Niebla','🌫️'];
-  if(code<=57) return ['Llovizna','🌦️'];
-  if(code<=67) return ['Lluvia','🌧️'];
-  if(code<=77) return ['Nieve','🌨️'];
-  if(code<=82) return ['Chubascos','🌧️'];
-  if(code<=86) return ['Nieve','🌨️'];
-  return ['Tormenta','⛈️'];
-}
-async function pintarClima(){
-  try{
-    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&timezone=auto`);
-    const d = await r.json();
-    const t = Math.round(d.current.temperature_2m);
-    const [desc,emo] = climaTexto(d.current.weather_code);
-    $('climaTemp').textContent = t + '°';
-    $('climaDesc').textContent = emo + ' ' + desc;
-  }catch(e){ $('climaDesc').textContent = 'sin datos'; }
-}
-pintarClima(); setInterval(pintarClima, 15*60*1000);
-
-/* ---------- Agenda (notas del backend) ---------- */
-async function pintarAgenda(){
-  try{
-    const r = await fetch(BACKEND + '/notas'); const d = await r.json();
-    const notas = (d.notas||[]).slice(0,4);
-    if(!notas.length){ $('notas').innerHTML = '<div id="agendaVacia">Nada apuntado. Dile "apunta que…"</div>'; return; }
-    $('notas').innerHTML = notas.map(n=>{
-      const f = (n.fecha||'').slice(5,10);
-      return `<div class="nota">${n.texto}${f?` <small>${f}</small>`:''}</div>`;
-    }).join('');
-  }catch(e){ /* deja lo que hubiera */ }
-}
-pintarAgenda(); setInterval(pintarAgenda, 60*1000);
-
 /* ---------- Voz de vuelta (TTS) ---------- */
 let voces=[];
 function puntuar(v){
@@ -510,26 +426,8 @@ function desbloquearVoz(){
 document.addEventListener('click', desbloquearVoz, true);
 document.addEventListener('touchend', desbloquearVoz, true);
 
-/* Selector de voces del servidor (suenan igual en todos los aparatos) */
-const VOCES = [
-  ['es-GT-AndresNeural','Andrés · Guatemala'],
-  ['es-MX-JorgeNeural','Jorge · México'],
-  ['es-ES-AlvaroNeural','Álvaro · España'],
-  ['es-AR-TomasNeural','Tomás · Argentina'],
-  ['es-CO-GonzaloNeural','Gonzalo · Colombia'],
-  ['es-US-AlonsoNeural','Alonso · EE. UU.'],
-  ['es-CL-LorenzoNeural','Lorenzo · Chile'],
-  ['es-VE-SebastianNeural','Sebastián · Venezuela'],
-  ['es-PE-AlexNeural','Álex · Perú'],
-  ['es-ES-ElviraNeural','Elvira · España (mujer)'],
-  ['es-MX-DaliaNeural','Dalia · México (mujer)'],
-];
-const $vozSel = document.getElementById('vozSel');
-let vozServidorId = localStorage.getItem('jarvis_voz_srv') || 'es-GT-AndresNeural';
-VOCES.forEach(([id,et])=>{ const o=document.createElement('option'); o.value=id; o.textContent=et; if(id===vozServidorId) o.selected=true; $vozSel.appendChild(o); });
-function vozServidor(){ return $vozSel.value || vozServidorId; }
-$vozSel.addEventListener('change', ()=>{ vozServidorId=$vozSel.value; localStorage.setItem('jarvis_voz_srv', vozServidorId); });
-document.getElementById('probarVoz').addEventListener('click', ()=> hablar('Buenas, señor Franco. Soy JARVIS. ¿Le convence esta voz?'));
+/* Voz del servidor por defecto (Andrés). El selector se quitó de la pantalla. */
+function vozServidor(){ return localStorage.getItem('jarvis_voz_srv') || 'es-GT-AndresNeural'; }
 
 /* Respaldo: la voz del navegador (solo suena bien en PC) */
 function hablarNavegador(texto, fin){
@@ -587,7 +485,6 @@ async function enviar(mensaje){
     if(!r.ok){ $('dJarvis').textContent = '⚠️ ' + (data.error||'Error'); terminarTurno(); }
     else{
       $('dJarvis').textContent = data.respuesta;
-      pintarAgenda(); // por si creó una nota
       setModo('habla');
       // Si tradujo, _meta.voz trae la voz nativa del idioma destino.
       hablar(data.respuesta, terminarTurno, data._meta && data._meta.voz);
@@ -601,7 +498,13 @@ $('enviar').addEventListener('click', ()=>{ const m=$('texto').value; $('texto')
 $('texto').addEventListener('keydown', e=>{ if(e.key==='Enter'){ const m=$('texto').value; $('texto').value=''; enviar(m); } });
 
 /* --- Cámara y visión --- */
-$('camBtn').addEventListener('click', ()=> $('camInput').click());
+/* Doble toque en la bola (el orbe) abre la cámara */
+let _tapOrbe = 0;
+$('escena').addEventListener('pointerdown', ()=>{
+  const ahora = Date.now();
+  if(ahora - _tapOrbe < 350){ _tapOrbe = 0; $('camInput').click(); }
+  else _tapOrbe = ahora;
+});
 $('camInput').addEventListener('change', async ()=>{
   const f = $('camInput').files && $('camInput').files[0];
   $('camInput').value = '';
@@ -674,6 +577,17 @@ function pararConversacion(){ modoConversacion=false; $('hablar').textContent='�
   try{ rec&&rec.stop(); }catch(e){} try{ speechSynthesis.cancel(); }catch(e){} try{ audioEl.pause(); }catch(e){} setModo('reposo'); }
 function alternar(){ if(!rec) return; modoConversacion ? pararConversacion() : iniciarConversacion(); }
 $('hablar').addEventListener('click', alternar);
+
+/* Abierto desde el atajo de Siri (?jarvis=1): un solo toque en cualquier
+   parte arranca la conversacion (iOS exige un gesto para micro y sonido). */
+if (new URLSearchParams(location.search).has('jarvis')) {
+  setModo('reposo', 'Toque la pantalla para hablar, señor Franco');
+  const arrancarUnaVez = () => {
+    document.removeEventListener('pointerdown', arrancarUnaVez, true);
+    if (rec && !modoConversacion) iniciarConversacion();
+  };
+  document.addEventListener('pointerdown', arrancarUnaVez, true);
+}
 </script>
 </body>
 </html>
