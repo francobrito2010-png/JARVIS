@@ -450,7 +450,10 @@ function hablar(texto, alTerminar, vozOverride){
   try{
     audioEl.onended = fin;
     audioEl.onerror = respaldo;
-    audioEl.src = BACKEND + '/voz?t=' + encodeURIComponent(texto) + '&v=' + encodeURIComponent(vozOverride || vozServidor());
+    const q = vozOverride
+      ? '&v=' + encodeURIComponent(vozOverride)                    // traducción: voz nativa (Edge)
+      : '&eleven=1&v=' + encodeURIComponent(vozServidor());        // normal: ElevenLabs (respaldo Andrés)
+    audioEl.src = BACKEND + '/voz?t=' + encodeURIComponent(texto) + q;
     const p = audioEl.play();
     if(p && p.catch) p.catch(respaldo);
     setTimeout(fin, Math.min(45000, 5000 + texto.length*140)); // red de seguridad

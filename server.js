@@ -13,6 +13,7 @@
 
 require("dotenv").config();
 const path = require("node:path");
+const { Readable } = require("node:stream");
 const express = require("express");
 const Anthropic = require("@anthropic-ai/sdk");
 const { SYSTEM_PROMPT } = require("./system-prompt");
@@ -93,6 +94,12 @@ let _ttsMod = null;
 async function cargarTTS() { if (!_ttsMod) _ttsMod = await import("msedge-tts"); return _ttsMod; }
 const VOZ = process.env.JARVIS_VOZ || "es-GT-AndresNeural";
 
+// ElevenLabs (voz premium). Si estan puestas la llave y el id de voz, JARVIS
+// habla con esa voz; si falla o no estan, cae solo a la voz de Edge (Andres).
+const ELEVEN_KEY = process.env.ELEVENLABS_API_KEY || "";
+const ELEVEN_VOICE = process.env.ELEVENLABS_VOICE_ID || "";
+const ELEVEN_MODEL = process.env.ELEVENLABS_MODEL || "eleven_multilingual_v2";
+
 // Reutilizamos la conexion por voz: evita el saludo (handshake) en cada turno,
 // que era lo que anadia latencia. Si la conexion murio, se recrea al vuelo.
 const _ttsCache = new Map();
@@ -109,11 +116,42 @@ async function obtenerTTS(voz) {
 app.get("/voz", async (req, res) => {
   const texto = String(req.query.t || "").slice(0, 1200).trim();
   if (!texto) return res.status(400).end();
-  // Voz elegida por el cliente (?v=), validada; si no encaja, la de por defecto.
-  let voz = String(req.query.v || "").trim();
-  if (!/^es-[A-Z]{2}-[A-Za-z]+Neural$/.test(voz)) voz = VOZ;
   res.setHeader("Content-Type", "audio/mpeg");
   res.setHeader("Cache-Control", "no-store");
+
+  // 1) ElevenLabs (voz premium) para la voz normal de JARVIS (?eleven=1)
+  if (req.query.eleven === "1" && ELEVEN_KEY && ELEVEN_VOICE) {
+    try {
+      const r = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${ELEVEN_VOICE}/stream`,
+        {
+          method: "POST",
+          headers: {
+            "xi-api-key": ELEVEN_KEY,
+            "Content-Type": "application/json",
+            Accept: "audio/mpeg",
+          },
+          body: JSON.stringify({
+            text: texto,
+            model_id: ELEVEN_MODEL,
+            voice_settings: { stability: 0.4, similarity_boost: 0.8 },
+          }),
+        }
+      );
+      if (r.ok && r.body) {
+        Readable.fromWeb(r.body).pipe(res);
+        return;
+      }
+      console.error("[JARVIS] ElevenLabs", r.status, (await r.text()).slice(0, 160));
+    } catch (e) {
+      console.error("[JARVIS] ElevenLabs error:", e.message);
+    }
+    // si falla, seguimos con Edge (respaldo)
+  }
+
+  // 2) Edge TTS (voz por defecto / respaldo / idiomas del traductor)
+  let voz = String(req.query.v || "").trim();
+  if (!/^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(voz)) voz = VOZ;
   try {
     let audioStream;
     try {
